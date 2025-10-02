@@ -1,0 +1,43 @@
+# Nexus AI - Configuração para Deploy no Render
+# Este arquivo configura o deploy automático no Render.com
+
+services:
+  - type: web
+    name: nexus-ai-server
+    env: python
+    plan: starter  # Pode ser alterado para standard/pro conforme necessário
+    buildCommand: pip install -r requirements.txt
+    startCommand: python server.py
+    envVars:
+      - key: PORT
+        value: 10000  # Render usa porta 10000 por padrão
+      - key: NEXUS_AUTH_TOKEN
+        generateValue: true  # Gera token automaticamente
+      - key: PYTHONUNBUFFERED
+        value: 1
+      - key: PYTHONDONTWRITEBYTECODE
+        value: 1
+    
+    # Configurações de saúde e recursos
+    healthCheckPath: /health
+    
+    # Configurações de auto-deploy
+    autoDeploy: true
+    
+    # Configurações de domínio (opcional)
+    # domains:
+    #   - nexus-ai.onrender.com
+
+# Configurações adicionais para banco de dados (futuro)
+# databases:
+#   - name: nexus-ai-db
+#     databaseName: nexus_ai
+#     user: nexus_user
+#     plan: starter
+
+# Configurações de variáveis de ambiente sensíveis
+# Estas devem ser configuradas no painel do Render:
+# - NEXUS_AUTH_TOKEN: Token de autenticação para endpoints protegidos
+# - MODEL_API_KEY: Chave para APIs de ML (se necessário)
+# - TTS_API_KEY: Chave para serviços de Text-to-Speech (se necessário)
+
