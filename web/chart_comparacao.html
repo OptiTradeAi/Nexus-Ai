@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus AI - Comparação de Candles</title>
+    
+    <!-- Lightweight Charts -->
+    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #f8fafc;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+        
+        .nexus-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .nexus-header {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .nexus-grid {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 20px;
+            height: calc(100vh - 200px);
+        }
+        
+        .nexus-chart {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: 12px;
+            padding: 20px;
+        }
+        
+        .nexus-sidebar {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: 12px;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status-connected { background-color: #10b981; }
+        .status-disconnected { background-color: #ef4444; }
+        .status-connecting { background-color: #f59e0b; animation: pulse 2s infinite; }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .log-entry {
+            background: rgba(30, 41, 59, 0.5);
+            border-left: 3px solid #3b82f6;
+            padding: 8px 12px;
+            margin-bottom: 8px;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+        
+        .log-entry.tick { border-left-color: #10b981; }
+        .log-entry.candle { border-left-color: #f59e0b; }
+        .log-entry.error { border-left-color: #ef4444; }
+        
+        .nexus-button {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        
+        .nexus-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background: rgba(30, 41, 59, 0.5);
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #3b82f6;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="nexus-container">
+        <!-- Header -->
+        <div class="nexus-header">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-blue-400 mb-2">🧠 Nexus AI - Comparação de Candles</h1>
+                    <p class="text-slate-400">Validação visual em tempo real dos dados capturados</p>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center">
+                        <span id="connectionStatus" class="status-indicator status-disconnected"></span>
+                        <span id="connectionText">Desconectado</span>
+                    </div>
+                    <button id="reconnectBtn" class="nexus-button">Reconectar</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Grid -->
+        <div class="nexus-grid">
+            <!-- Chart Area -->
+            <div class="nexus-chart">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg font-semibold">Gráfico Nexus AI (Réplica)</h2>
+                    <div class="flex items-center space-x-2">
+                        <select id="symbolSelect" class="bg-slate-700 text-white px-3 py-1 rounded border border-slate-600">
+                            <option value="AAPL-OTC">AAPL-OTC</option>
+                            <option value="EURUSD-OTC">EURUSD-OTC</option>
+                            <option value="GBPUSD-OTC">GBPUSD-OTC</option>
+                        </select>
+                        <select id="timeframeSelect" class="bg-slate-700 text-white px-3 py-1 rounded border border-slate-600">
+                            <option value="1s">1 segundo</option>
+                            <option value="60s" selected>1 minuto</option>
+                            <option value="300s">5 minutos</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="chartContainer" style="height: calc(100% - 60px);"></div>
+            </div>
+            
+            <!-- Sidebar -->
+            <div class="nexus-sidebar">
+                <!-- Stats -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div id="tickCount" class="stat-value">0</div>
+                        <div class="stat-label">Ticks</div>
+                    </div>
+                    <div class="stat-card">
+                        <div id="candleCount" class="stat-value">0</div>
+                        <div class="stat-label">Candles</div>
+                    </div>
+                    <div class="stat-card">
+                        <div id="lastPrice" class="stat-value">-</div>
+                        <div class="stat-label">Último Preço</div>
+                    </div>
+                </div>
+                
+                <!-- Controls -->
+                <div class="mb-4">
+                    <h3 class="text-sm font-semibold mb-2">Controles</h3>
+                    <div class="space-y-2">
+                        <button id="clearChart" class="nexus-button w-full">Limpar Gráfico</button>
+                        <button id="exportData" class="nexus-button w-full">Exportar Dados</button>
+                    </div>
+                </div>
+                
+                <!-- Log -->
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-sm font-semibold">Log de Eventos</h3>
+                        <button id="clearLog" class="text-xs text-slate-400 hover:text-white">Limpar</button>
+                    </div>
+                    <div id="logContainer" class="space-y-1 max-h-96 overflow-y-auto"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Estado global
+        let ws = null;
+        let chart = null;
+        let candlestickSeries = null;
+        let stats = {
+            ticks: 0,
+            candles: 0,
+            lastPrice: null
+        };
+        let candleData = new Map(); // symbol -> timeframe -> data
+        
+        // Elementos DOM
+        const elements = {
+            connectionStatus: document.getElementById('connectionStatus'),
+            connectionText: document.getElementById('connectionText'),
+            reconnectBtn: document.getElementById('reconnectBtn'),
+            symbolSelect: document.getElementById('symbolSelect'),
+            timeframeSelect: document.getElementById('timeframeSelect'),
+            chartContainer: document.getElementById('chartContainer'),
+            tickCount: document.getElementById('tickCount'),
+            candleCount: document.getElementById('candleCount'),
+            lastPrice: document.getElementById('lastPrice'),
+            clearChart: document.getElementById('clearChart'),
+            exportData: document.getElementById('exportData'),
+            clearLog: document.getElementById('clearLog'),
+            logContainer: document.getElementById('logContainer')
+        };
+        
+        // Função para log
+        function addLog(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry ${type}`;
+            logEntry.innerHTML = `<span class="text-slate-400">${timestamp}</span> ${message}`;
+            
+            elements.logContainer.insertBefore(logEntry, elements.logContainer.firstChild);
+            
+            // Manter apenas os últimos 100 logs
+            while (elements.logContainer.children.length > 100) {
+                elements.logContainer.removeChild(elements.logContainer.lastChild);
+            }
+        }
+        
+        // Função para atualizar status da conexão
+        function updateConnectionStatus(status) {
+            elements.connectionStatus.className = `status-indicator status-${status}`;
+            
+            switch (status) {
+                case 'connected':
+                    elements.connectionText.textContent = 'Conectado';
+                    break;
+                case 'connecting':
+                    elements.connectionText.textContent = 'Conectando...';
+                    break;
+                case 'disconnected':
+                    elements.connectionText.textContent = 'Desconectado';
+                    break;
+            }
+        }
+        
+        // Função para atualizar estatísticas
+        function updateStats() {
+            elements.tickCount.textContent = stats.ticks.toLocaleString();
+            elements.candleCount.textContent = stats.candles.toLocaleString();
+            elements.lastPrice.textContent = stats.lastPrice ? stats.lastPrice.toFixed(4) : '-';
+        }
+        
+        // Função para inicializar o gráfico
+        function initChart() {
+            chart = LightweightCharts.createChart(elements.chartContainer, {
+                width: elements.chartContainer.clientWidth,
+                height: elements.chartContainer.clientHeight,
+                layout: {
+                    background: { color: 'transparent' },
+                    textColor: '#f8fafc',
+                },
+                grid: {
+                    vertLines: { color: 'rgba(59, 130, 246, 0.1)' },
+                    horzLines: { color: 'rgba(59, 130, 246, 0.1)' },
+                },
+                crosshair: {
+                    mode: LightweightCharts.CrosshairMode.Normal,
+                },
+                rightPriceScale: {
+                    borderColor: 'rgba(59, 130, 246, 0.3)',
+                },
+                timeScale: {
+                    borderColor: 'rgba(59, 130, 246, 0.3)',
+                    timeVisible: true,
+                    secondsVisible: true,
+                },
+            });
+            
+            candlestickSeries = chart.addCandlestickSeries({
+                upColor: '#10b981',
+                downColor: '#ef4444',
+                borderDownColor: '#ef4444',
+                borderUpColor: '#10b981',
+                wickDownColor: '#ef4444',
+                wickUpColor: '#10b981',
+            });
+            
+            // Responsividade
+            window.addEventListener('resize', () => {
+                chart.applyOptions({
+                    width: elements.chartContainer.clientWidth,
+                    height: elements.chartContainer.clientHeight,
+                });
+            });
+            
+            addLog('Gráfico inicializado', 'info');
+        }
+        
+        // Função para conectar WebSocket
+        function connectWebSocket() {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                return;
+            }
+            
+            updateConnectionStatus('connecting');
+            addLog('Conectando ao servidor Nexus AI...', 'info');
+            
+            ws = new WebSocket('ws://127.0.0.1:9000/ws');
+            
+            ws.onopen = function() {
+                updateConnectionStatus('connected');
+                addLog('✅ Conectado ao servidor Nexus AI', 'info');
+            };
+            
+            ws.onmessage = function(event) {
+                try {
+                    const data = JSON.parse(event.data);
+                    handleServerMessage(data);
+                } catch (error) {
+                    addLog(`❌ Erro ao parsear mensagem: ${error.message}`, 'error');
+                }
+            };
+            
+            ws.onclose = function() {
+                updateConnectionStatus('disconnected');
+                addLog('❌ Conexão perdida', 'error');
+                
+                // Tentar reconectar após 3 segundos
+                setTimeout(connectWebSocket, 3000);
+            };
+            
+            ws.onerror = function(error) {
+                addLog(`❌ Erro na conexão: ${error}`, 'error');
+            };
+        }
+        
+        // Função para processar mensagens do servidor
+        function handleServerMessage(data) {
+            switch (data.type) {
+                case 'tick':
+                    stats.ticks++;
+                    stats.lastPrice = data.price;
+                    updateStats();
+                    addLog(`📊 Tick: ${data.symbol} @ ${data.price.toFixed(4)}`, 'tick');
+                    break;
+                
+                case 'candle:update':
+                case 'candle:closed':
+                    if (data.symbol === elements.symbolSelect.value && 
+                        data.timeframe === elements.timeframeSelect.value) {
+                        
+                        const candleItem = {
+                            time: data.start,
+                            open: data.open,
+                            high: data.high,
+                            low: data.low,
+                            close: data.close
+                        };
+                        
+                        candlestickSeries.update(candleItem);
+                        
+                        if (data.type === 'candle:closed') {
+                            stats.candles++;
+                            updateStats();
+                        }
+                        
+                        addLog(`🕯️ ${data.type}: ${data.symbol} ${data.timeframe} OHLC(${data.open.toFixed(4)}, ${data.high.toFixed(4)}, ${data.low.toFixed(4)}, ${data.close.toFixed(4)})`, 'candle');
+                    }
+                    break;
+                
+                case 'screen:frame':
+                    addLog(`📺 Frame de screen-share recebido`, 'info');
+                    break;
+                
+                default:
+                    addLog(`📨 Mensagem: ${JSON.stringify(data).substring(0, 100)}...`, 'info');
+            }
+        }
+        
+        // Event listeners
+        elements.reconnectBtn.addEventListener('click', connectWebSocket);
+        
+        elements.symbolSelect.addEventListener('change', function() {
+            candlestickSeries.setData([]);
+            addLog(`Símbolo alterado para: ${this.value}`, 'info');
+        });
+        
+        elements.timeframeSelect.addEventListener('change', function() {
+            candlestickSeries.setData([]);
+            addLog(`Timeframe alterado para: ${this.value}`, 'info');
+        });
+        
+        elements.clearChart.addEventListener('click', function() {
+            candlestickSeries.setData([]);
+            addLog('Gráfico limpo', 'info');
+        });
+        
+        elements.exportData.addEventListener('click', function() {
+            // Implementar exportação de dados
+            addLog('Funcionalidade de exportação em desenvolvimento', 'info');
+        });
+        
+        elements.clearLog.addEventListener('click', function() {
+            elements.logContainer.innerHTML = '';
+        });
+        
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', function() {
+            initChart();
+            connectWebSocket();
+            addLog('🚀 Nexus AI - Comparação de Candles iniciado', 'info');
+        });
+    </script>
+</body>
+</html>
+

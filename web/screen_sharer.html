@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus AI - Compartilhamento de Tela</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #f8fafc;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+        
+        .nexus-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .nexus-card {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .nexus-button {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            border: none;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .nexus-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        }
+        
+        .nexus-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .nexus-button.danger {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        }
+        
+        .nexus-button.danger:hover {
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status-inactive { background-color: #6b7280; }
+        .status-active { background-color: #10b981; }
+        .status-error { background-color: #ef4444; }
+        
+        .preview-container {
+            background: #000;
+            border-radius: 8px;
+            overflow: hidden;
+            aspect-ratio: 16/9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px dashed rgba(59, 130, 246, 0.3);
+        }
+        
+        .preview-video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+        }
+        
+        .stat-card {
+            background: rgba(30, 41, 59, 0.5);
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #3b82f6;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-top: 4px;
+        }
+        
+        .consent-banner {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+        
+        .log-container {
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 8px;
+            padding: 16px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 12px;
+        }
+        
+        .log-entry {
+            margin-bottom: 4px;
+            line-height: 1.4;
+        }
+        
+        .log-timestamp {
+            color: #94a3b8;
+        }
+        
+        .log-info { color: #3b82f6; }
+        .log-success { color: #10b981; }
+        .log-warning { color: #f59e0b; }
+        .log-error { color: #ef4444; }
+    </style>
+</head>
+<body>
+    <div class="nexus-container">
+        <!-- Header -->
+        <div class="nexus-card">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-blue-400 mb-2">📺 Nexus AI - Compartilhamento de Tela</h1>
+                    <p class="text-slate-400">Captura de tela em tempo real para análise visual com IA</p>
+                </div>
+                <div class="flex items-center">
+                    <span id="connectionStatus" class="status-indicator status-inactive"></span>
+                    <span id="connectionText">Inativo</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Consent Banner -->
+        <div id="consentBanner" class="consent-banner">
+            <div class="flex items-start space-x-3">
+                <div class="text-blue-400 text-xl">🔒</div>
+                <div class="flex-1">
+                    <h3 class="font-semibold text-blue-400 mb-2">Consentimento para Compartilhamento de Tela</h3>
+                    <p class="text-sm text-slate-300 mb-3">
+                        O Nexus AI precisa acessar sua tela para capturar dados visuais da corretora em tempo real. 
+                        Seus dados são processados localmente e não são armazenados permanentemente.
+                    </p>
+                    <ul class="text-xs text-slate-400 space-y-1 mb-4">
+                        <li>• Dados sensíveis são automaticamente mascarados</li>
+                        <li>• Nenhuma credencial ou senha é capturada</li>
+                        <li>• Você pode parar o compartilhamento a qualquer momento</li>
+                        <li>• Revise os Termos de Serviço da sua corretora antes de usar</li>
+                    </ul>
+                    <div class="flex space-x-3">
+                        <button id="acceptConsent" class="nexus-button">
+                            ✅ Aceito e Continuar
+                        </button>
+                        <button id="declineConsent" class="nexus-button danger">
+                            ❌ Recusar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div id="mainContent" class="hidden">
+            <!-- Controls -->
+            <div class="nexus-card">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg font-semibold">Controles de Captura</h2>
+                    <div class="flex space-x-3">
+                        <button id="startCapture" class="nexus-button">
+                            🎥 Iniciar Captura
+                        </button>
+                        <button id="stopCapture" class="nexus-button danger" disabled>
+                            ⏹️ Parar Captura
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Settings -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Qualidade do Frame</label>
+                        <select id="qualitySelect" class="w-full bg-slate-700 text-white px-3 py-2 rounded border border-slate-600">
+                            <option value="0.7">Baixa (70%)</option>
+                            <option value="0.8" selected>Média (80%)</option>
+                            <option value="0.9">Alta (90%)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Intervalo (ms)</label>
+                        <select id="intervalSelect" class="w-full bg-slate-700 text-white px-3 py-2 rounded border border-slate-600">
+                            <option value="100">100ms (10 FPS)</option>
+                            <option value="200" selected>200ms (5 FPS)</option>
+                            <option value="500">500ms (2 FPS)</option>
+                            <option value="1000">1000ms (1 FPS)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Servidor</label>
+                        <input id="serverUrl" type="text" value="ws://127.0.0.1:9000/ws_screen" 
+                               class="w-full bg-slate-700 text-white px-3 py-2 rounded border border-slate-600">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Preview and Stats -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Preview -->
+                <div class="nexus-card">
+                    <h3 class="text-lg font-semibold mb-4">Preview da Captura</h3>
+                    <div class="preview-container">
+                        <video id="previewVideo" class="preview-video hidden" autoplay muted></video>
+                        <div id="previewPlaceholder" class="text-center text-slate-400">
+                            <div class="text-4xl mb-2">📺</div>
+                            <p>Clique em "Iniciar Captura" para começar</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Stats -->
+                <div class="nexus-card">
+                    <h3 class="text-lg font-semibold mb-4">Estatísticas</h3>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div id="frameCount" class="stat-value">0</div>
+                            <div class="stat-label">Frames Enviados</div>
+                        </div>
+                        <div class="stat-card">
+                            <div id="frameRate" class="stat-value">0</div>
+                            <div class="stat-label">FPS Atual</div>
+                        </div>
+                        <div class="stat-card">
+                            <div id="dataSize" class="stat-value">0</div>
+                            <div class="stat-label">KB Enviados</div>
+                        </div>
+                        <div class="stat-card">
+                            <div id="uptime" class="stat-value">00:00</div>
+                            <div class="stat-label">Tempo Ativo</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Log -->
+            <div class="nexus-card">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold">Log de Eventos</h3>
+                    <button id="clearLog" class="text-sm text-slate-400 hover:text-white">Limpar</button>
+                </div>
+                <div id="logContainer" class="log-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Estado global
+        let mediaStream = null;
+        let ws = null;
+        let captureInterval = null;
+        let canvas = null;
+        let ctx = null;
+        let stats = {
+            frameCount: 0,
+            dataSize: 0,
+            startTime: null,
+            lastFrameTime: 0
+        };
+        let consentGiven = false;
+        
+        // Elementos DOM
+        const elements = {
+            consentBanner: document.getElementById('consentBanner'),
+            mainContent: document.getElementById('mainContent'),
+            acceptConsent: document.getElementById('acceptConsent'),
+            declineConsent: document.getElementById('declineConsent'),
+            connectionStatus: document.getElementById('connectionStatus'),
+            connectionText: document.getElementById('connectionText'),
+            startCapture: document.getElementById('startCapture'),
+            stopCapture: document.getElementById('stopCapture'),
+            qualitySelect: document.getElementById('qualitySelect'),
+            intervalSelect: document.getElementById('intervalSelect'),
+            serverUrl: document.getElementById('serverUrl'),
+            previewVideo: document.getElementById('previewVideo'),
+            previewPlaceholder: document.getElementById('previewPlaceholder'),
+            frameCount: document.getElementById('frameCount'),
+            frameRate: document.getElementById('frameRate'),
+            dataSize: document.getElementById('dataSize'),
+            uptime: document.getElementById('uptime'),
+            logContainer: document.getElementById('logContainer'),
+            clearLog: document.getElementById('clearLog')
+        };
+        
+        // Função para log
+        function addLog(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = 'log-entry';
+            logEntry.innerHTML = `<span class="log-timestamp">${timestamp}</span> <span class="log-${type}">${message}</span>`;
+            
+            elements.logContainer.insertBefore(logEntry, elements.logContainer.firstChild);
+            
+            // Manter apenas os últimos 100 logs
+            while (elements.logContainer.children.length > 100) {
+                elements.logContainer.removeChild(elements.logContainer.lastChild);
+            }
+        }
+        
+        // Função para atualizar status da conexão
+        function updateConnectionStatus(status, text) {
+            elements.connectionStatus.className = `status-indicator status-${status}`;
+            elements.connectionText.textContent = text;
+        }
+        
+        // Função para atualizar estatísticas
+        function updateStats() {
+            elements.frameCount.textContent = stats.frameCount.toLocaleString();
+            elements.dataSize.textContent = Math.round(stats.dataSize / 1024).toLocaleString();
+            
+            // Calcular FPS
+            const now = Date.now();
+            const fps = stats.lastFrameTime ? Math.round(1000 / (now - stats.lastFrameTime)) : 0;
+            elements.frameRate.textContent = fps;
+            stats.lastFrameTime = now;
+            
+            // Calcular uptime
+            if (stats.startTime) {
+                const uptime = Math.floor((now - stats.startTime) / 1000);
+                const minutes = Math.floor(uptime / 60);
+                const seconds = uptime % 60;
+                elements.uptime.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }
+        }
+        
+        // Função para conectar WebSocket
+        function connectWebSocket() {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                return Promise.resolve();
+            }
+            
+            return new Promise((resolve, reject) => {
+                const url = elements.serverUrl.value;
+                addLog(`Conectando ao servidor: ${url}`, 'info');
+                
+                ws = new WebSocket(url);
+                
+                ws.onopen = function() {
+                    updateConnectionStatus('active', 'Conectado');
+                    addLog('✅ Conectado ao servidor Nexus AI', 'success');
+                    resolve();
+                };
+                
+                ws.onclose = function() {
+                    updateConnectionStatus('inactive', 'Desconectado');
+                    addLog('❌ Conexão perdida', 'error');
+                };
+                
+                ws.onerror = function(error) {
+                    updateConnectionStatus('error', 'Erro');
+                    addLog(`❌ Erro na conexão: ${error}`, 'error');
+                    reject(error);
+                };
+            });
+        }
+        
+        // Função para iniciar captura de tela
+        async function startScreenCapture() {
+            try {
+                addLog('Solicitando acesso à tela...', 'info');
+                
+                mediaStream = await navigator.mediaDevices.getDisplayMedia({
+                    video: {
+                        mediaSource: 'screen',
+                        width: { ideal: 1920 },
+                        height: { ideal: 1080 },
+                        frameRate: { ideal: 10, max: 30 }
+                    },
+                    audio: false
+                });
+                
+                // Configurar preview
+                elements.previewVideo.srcObject = mediaStream;
+                elements.previewVideo.classList.remove('hidden');
+                elements.previewPlaceholder.classList.add('hidden');
+                
+                // Criar canvas para captura de frames
+                canvas = document.createElement('canvas');
+                ctx = canvas.getContext('2d');
+                
+                // Conectar ao servidor
+                await connectWebSocket();
+                
+                // Iniciar captura de frames
+                const interval = parseInt(elements.intervalSelect.value);
+                const quality = parseFloat(elements.qualitySelect.value);
+                
+                stats.startTime = Date.now();
+                stats.frameCount = 0;
+                stats.dataSize = 0;
+                
+                captureInterval = setInterval(() => {
+                    captureFrame(quality);
+                }, interval);
+                
+                // Atualizar UI
+                elements.startCapture.disabled = true;
+                elements.stopCapture.disabled = false;
+                updateConnectionStatus('active', 'Capturando');
+                
+                addLog('✅ Captura de tela iniciada', 'success');
+                
+                // Listener para quando o usuário parar o compartilhamento
+                mediaStream.getVideoTracks()[0].addEventListener('ended', () => {
+                    stopScreenCapture();
+                    addLog('⚠️ Compartilhamento de tela interrompido pelo usuário', 'warning');
+                });
+                
+            } catch (error) {
+                addLog(`❌ Erro ao iniciar captura: ${error.message}`, 'error');
+                updateConnectionStatus('error', 'Erro');
+            }
+        }
+        
+        // Função para capturar frame
+        function captureFrame(quality) {
+            if (!mediaStream || !canvas || !ctx || !ws || ws.readyState !== WebSocket.OPEN) {
+                return;
+            }
+            
+            try {
+                const video = elements.previewVideo;
+                
+                // Configurar canvas com dimensões do vídeo
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                
+                // Desenhar frame atual no canvas
+                ctx.drawImage(video, 0, 0);
+                
+                // Converter para base64
+                const dataURL = canvas.toDataURL('image/jpeg', quality);
+                
+                // Enviar frame para servidor
+                const frameData = {
+                    type: 'frame',
+                    image: dataURL,
+                    ts: Date.now() / 1000,
+                    width: canvas.width,
+                    height: canvas.height,
+                    quality: quality
+                };
+                
+                ws.send(JSON.stringify(frameData));
+                
+                // Atualizar estatísticas
+                stats.frameCount++;
+                stats.dataSize += dataURL.length;
+                updateStats();
+                
+            } catch (error) {
+                addLog(`❌ Erro ao capturar frame: ${error.message}`, 'error');
+            }
+        }
+        
+        // Função para parar captura
+        function stopScreenCapture() {
+            if (captureInterval) {
+                clearInterval(captureInterval);
+                captureInterval = null;
+            }
+            
+            if (mediaStream) {
+                mediaStream.getTracks().forEach(track => track.stop());
+                mediaStream = null;
+            }
+            
+            if (ws) {
+                ws.close();
+                ws = null;
+            }
+            
+            // Resetar UI
+            elements.previewVideo.classList.add('hidden');
+            elements.previewPlaceholder.classList.remove('hidden');
+            elements.startCapture.disabled = false;
+            elements.stopCapture.disabled = true;
+            updateConnectionStatus('inactive', 'Inativo');
+            
+            addLog('⏹️ Captura de tela parada', 'info');
+        }
+        
+        // Event listeners para consentimento
+        elements.acceptConsent.addEventListener('click', function() {
+            consentGiven = true;
+            elements.consentBanner.classList.add('hidden');
+            elements.mainContent.classList.remove('hidden');
+            addLog('✅ Consentimento concedido', 'success');
+        });
+        
+        elements.declineConsent.addEventListener('click', function() {
+            addLog('❌ Consentimento recusado', 'warning');
+            alert('O compartilhamento de tela é necessário para o funcionamento do Nexus AI.');
+        });
+        
+        // Event listeners para controles
+        elements.startCapture.addEventListener('click', startScreenCapture);
+        elements.stopCapture.addEventListener('click', stopScreenCapture);
+        
+        elements.clearLog.addEventListener('click', function() {
+            elements.logContainer.innerHTML = '';
+        });
+        
+        // Verificar suporte do navegador
+        document.addEventListener('DOMContentLoaded', function() {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
+                addLog('❌ Navegador não suporta captura de tela', 'error');
+                elements.startCapture.disabled = true;
+                elements.startCapture.textContent = 'Não Suportado';
+            } else {
+                addLog('🚀 Nexus AI - Compartilhamento de Tela carregado', 'info');
+            }
+        });
+        
+        // Cleanup ao fechar página
+        window.addEventListener('beforeunload', function() {
+            stopScreenCapture();
+        });
+    </script>
+</body>
+</html>
+
