@@ -1,0 +1,35 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Nexus AI — Dashboard</title>
+  <link rel="stylesheet" href="/ui/static/css/style.css">
+</head>
+<body>
+  <header>
+    <h1>Nexus AI — Dashboard</h1>
+    <a href="/logout">Logout</a>
+  </header>
+
+  <main>
+    <section>
+      <button id="btnShare">📺 Compartilhar Tela</button>
+      <button id="btnStop">⛔ Parar</button>
+      <p>Status WS: <span id="wsStatus">desconectado</span></p>
+    </section>
+
+    <section>
+      <h3>Preview</h3>
+      <video id="localVideo" autoplay muted playsinline style="max-width:420px;border:1px solid #ccc"></video>
+    </section>
+
+    <section>
+      <h3>Logs / sinais</h3>
+      <pre id="logs" style="height:220px;overflow:auto;background:#111;color:#0f0;padding:8px"></pre>
+    </section>
+  </main>
+
+  <script src="/ui/static/js/stream.js"></script>
+</body>
+</html>
