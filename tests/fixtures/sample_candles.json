@@ -1,0 +1,39 @@
+[
+  {
+    "type": "candle:closed",
+    "symbol": "AAPL-OTC",
+    "timeframe": "1m",
+    "start": 1234567800,
+    "open": 100.0,
+    "high": 101.0,
+    "low": 99.5,
+    "close": 100.5,
+    "volume": 1000,
+    "timestamp": 1234567860
+  },
+  {
+    "type": "candle:closed",
+    "symbol": "AAPL-OTC",
+    "timeframe": "1m",
+    "start": 1234567860,
+    "open": 100.5,
+    "high": 101.5,
+    "low": 100.0,
+    "close": 101.0,
+    "volume": 1200,
+    "timestamp": 1234567920
+  },
+  {
+    "type": "candle:closed",
+    "symbol": "EURUSD-OTC",
+    "timeframe": "1m",
+    "start": 1234567800,
+    "open": 1.0850,
+    "high": 1.0860,
+    "low": 1.0845,
+    "close": 1.0855,
+    "volume": 500,
+    "timestamp": 1234567860
+  }
+]
+

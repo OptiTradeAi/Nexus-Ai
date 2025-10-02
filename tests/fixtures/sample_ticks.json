@@ -1,0 +1,43 @@
+[
+  {
+    "symbol": "AAPL-OTC",
+    "price": 100.0,
+    "ts": 1234567890,
+    "volume": 1,
+    "bid_price": 99.95,
+    "ask_price": 100.05
+  },
+  {
+    "symbol": "AAPL-OTC",
+    "price": 100.1,
+    "ts": 1234567891,
+    "volume": 2,
+    "bid_price": 100.05,
+    "ask_price": 100.15
+  },
+  {
+    "symbol": "AAPL-OTC",
+    "price": 99.9,
+    "ts": 1234567892,
+    "volume": 1,
+    "bid_price": 99.85,
+    "ask_price": 99.95
+  },
+  {
+    "symbol": "EURUSD-OTC",
+    "price": 1.0850,
+    "ts": 1234567893,
+    "volume": 5,
+    "bid_price": 1.0848,
+    "ask_price": 1.0852
+  },
+  {
+    "symbol": "EURUSD-OTC",
+    "price": 1.0855,
+    "ts": 1234567894,
+    "volume": 3,
+    "bid_price": 1.0853,
+    "ask_price": 1.0857
+  }
+]
+
