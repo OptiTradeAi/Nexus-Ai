@@ -1,0 +1,73 @@
+{
+  "manifest_version": 3,
+  "name": "Nexus AI - Trading Data Interceptor",
+  "version": "1.0.0",
+  "description": "Intercepta dados de trading em tempo real da HomeBroker para análise com IA. Desenvolvido por Manus AI.",
+  
+  "permissions": [
+    "scripting",
+    "storage",
+    "activeTab",
+    "background"
+  ],
+  
+  "host_permissions": [
+    "https://www.homebroker.com/*",
+    "https://*.homebroker.com/*",
+    "https://ws-sa1.pusher.com/*",
+    "https://ws-us2.pusher.com/*",
+    "http://127.0.0.1/*",
+    "http://localhost/*",
+    "https://*.onrender.com/*"
+  ],
+  
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.homebroker.com/*",
+        "https://*.homebroker.com/*"
+      ],
+      "js": ["content_bridge.js"],
+      "run_at": "document_start",
+      "all_frames": true
+    }
+  ],
+  
+  "web_accessible_resources": [
+    {
+      "resources": ["page_hook.js"],
+      "matches": [
+        "https://www.homebroker.com/*",
+        "https://*.homebroker.com/*"
+      ]
+    }
+  ],
+  
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Nexus AI - Status",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  
+  "options_page": "options.html",
+  
+  "minimum_chrome_version": "88"
+}
+
