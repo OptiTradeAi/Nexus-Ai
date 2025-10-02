@@ -1,0 +1,6 @@
+aiohttp
+aiohttp-cors
+Pillow
+pytesseract
+openai-whisper
+torch
